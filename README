@@ -1,0 +1,13 @@
+If you come across a crash report like:
+https://crash-stats.mozilla.com/report/index/95fc8b76-e6c7-4f5c-bddf-dc97c2101116
+
+You can run:
+./stack-blame.py 95fc8b76-e6c7-4f5c-bddf-dc97c2101116
+
+Which creates HTML output like:
+https://www.squarefree.com/stack-blame/95fc8b76-e6c7-4f5c-bddf-dc97c2101116.html
+
+Along with ASCII output:
+https://www.squarefree.com/stack-blame/95fc8b76-e6c7-4f5c-bddf-dc97c2101116.txt
+
+Fresher lines of code are deep green, making them easy to spot.
