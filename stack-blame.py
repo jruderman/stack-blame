@@ -108,7 +108,8 @@ def processStackFromMDSW(stack):
                     htmlMain += " " + mxrLineLink + "</h3>\n\n"
                     print module + " ! " + funName + " (" + filename + ":" + str(line) + " @ " + changeset + ")"
                     print
-                    showContext(filename, line, officialRepoName, changeset)
+                    if not "dist/include" in filename:
+                        showContext(filename, line, officialRepoName, changeset)
                 else:
                     print module + " ! " + funName + " (unknown.file:" + str(line) + ")"
                     htmlMain += " (unknown.file:" + str(line) + ")</h3>\n\n"
