@@ -82,7 +82,7 @@ def processStackFromMDSW(stack):
                 else:
                     break
 
-            stackFrameNum = int(a[1])
+            #stackFrameNum = int(a[1])
             #if stackFrameNum > 10:
             #    break
             module = a[2]
