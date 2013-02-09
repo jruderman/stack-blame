@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser(description="Show hg blame for each line of a s
 parser.add_argument("-a", "--allthreads", dest="allthreads", action='store_true', help="show all threads (default: only the crashing thread)", default=False)
 parser.add_argument("-c", "--context", dest="context", metavar="N", type=int, help="lines of context (default: 5)", default=5)
 parser.add_argument("-R", "--repository", dest="repo", metavar="dir", default=None, help="local repository (default: guess a directory like ~/mozilla-central/ based on the repo name)")
-parser.add_argument("input", help="Crash report ID (or file containing the output of 'minidump_stackwalk -m')")
+parser.add_argument("input", help="Crash report ID, file containing the output of 'minidump_stackwalk -m', or file containing the output of gdb 'bt'")
 args = parser.parse_args()
 
 beginning_of_time = datetime.date(2007, 03, 22) # Mozilla's CVS->Hg migration
@@ -61,10 +61,12 @@ def html_link(url, text, clazz=None, title=None):
     return "<a" + clazzAttr + titleAttr + hrefAttr + ">" + text + "</a>"
 
 
-def processStackFromMDSW(stack):
+def processStack(stack):
     global htmlMain
     lastThreadSeen = None
+    cachedChangeset = None
     for stackLine in stack:
+        # minidump_stackwalk -m
         # Example:
         # 0|0|XUL|_cairo_image_surface_assume_ownership_of_data|hg:hg.mozilla.org/mozilla-central:gfx/cairo/cairo/src/cairo-image-surface.c:a42e9b001bc8|812|0x0
         a = stackLine.split("|")
@@ -98,10 +100,36 @@ def processStackFromMDSW(stack):
                 filename = None
                 changeset = None
 
-            showStackEntry(module, funName, line, filename, changeset, officialRepoName)
+            showStackEntry(module, funName, line, filename, changeset, officialRepoName, None)
+
+        elif stackLine.startswith("#"):
+            # gdb "bt"
+            # Example:
+            # #1  0x0000000104ae1111 in str_localeCompare (cx=0x10bde7fb0, argc=0, vp=0x111a3a0a0) at /Users/jruderman/trees/mozilla-central/js/src/jsstr.cpp:779
+            match = re.match(r"#\d+\s+(?:0x[0-9a-f]* in )?([^() ]*)(.*)", stackLine)
+            funName = match.group(1)
+            rest = match.group(2)
+
+            match2 = re.match(r"(.*) at (.*mozilla-central/)(.*):(\d+)", rest)
+            if match2:
+                rest = match2.group(1)
+                repo = match2.group(2)
+                filename = match2.group(3)
+                line = match2.group(4)
+                officialRepoName = "mozilla-central" # ?
+                cachedChangeset = cachedChangeset or subprocess.check_output(["hg", "-R", repo, "log", "--template", "{node}", "-r", "first(parents(.))"])[0:12]
+                changeset = cachedChangeset
+            else:
+                filename = None
+                line = None
+                changeset = None
+                officialRepoName = None
+                repo = None
+
+            showStackEntry(None, funName, line, filename, changeset, officialRepoName, repo)
 
 
-def showStackEntry(module, funName, line, filename, changeset, officialRepoName):
+def showStackEntry(module, funName, line, filename, changeset, officialRepoName, repo):
     global htmlMain
     modulePrefix = module + " ! " if module else ""
     print
@@ -122,7 +150,7 @@ def showStackEntry(module, funName, line, filename, changeset, officialRepoName)
             print modulePrefix + funName + " (" + filename + ":" + line + " @ " + changeset + ")"
             print
             if not "dist/include" in filename:
-                showContext(filename, int(line), officialRepoName, changeset)
+                showContext(filename, int(line), changeset, officialRepoName, repo)
         else:
             print modulePrefix + funName + " (unknown.file:" + line + ")"
             htmlMain += " (unknown.file:" + line + ")</h3>\n\n"
@@ -131,13 +159,13 @@ def showStackEntry(module, funName, line, filename, changeset, officialRepoName)
         htmlMain += html_escape(funName) + " (unknown repo)</h3>\n\n"
 
 
-def showContext(filename, line, officialRepoName, changeset):
+def showContext(filename, line, changeset, officialRepoName, repo):
     global htmlMain, rawBlameCache
     hashKey = changeset + filename
     if hashKey in rawBlameCache:
         rawBlame = rawBlameCache[hashKey]
     else:
-        repo = args.repo or findRepo(officialRepoName)
+        repo = repo or args.repo or findRepo(officialRepoName)
         rawBlame = subprocess.check_output(["hg", "-R", repo, "blame", "-c", "-d", "-q", "-u", "-n", "-r", changeset, repo + filename]).split("\n")
         rawBlameCache[hashKey] = rawBlame
 
@@ -188,7 +216,7 @@ def findRepo(officialRepoName):
 
 
 if os.path.exists(args.input):
-    processStackFromMDSW(open(args.input))
+    processStack(open(args.input))
     outfilename = "stackblame.html"
 else:
     match = re.match(r"(bp-)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})", args.input, flags=re.IGNORECASE)
@@ -196,7 +224,7 @@ else:
         crashReportID = match.group(2)
         print "Fetching crash report " + crashReportID
         jsonCrashReport = subprocess.check_output(["curl", "--silent", "https://crash-stats.mozilla.com/dumps/" + crashReportID + ".jsonz"])
-        processStackFromMDSW(json.loads(jsonCrashReport).get("dump").split("\n"))
+        processStack(json.loads(jsonCrashReport).get("dump").split("\n"))
         outfilename = crashReportID + ".html"
         htmlPrologue = "<h1>Stack Blame for " + html_link("https://crash-stats.mozilla.com/report/index/" + crashReportID, "bp-" + crashReportID, "crashreport") + "</h1>"
     else:
