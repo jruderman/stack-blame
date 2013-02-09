@@ -83,40 +83,53 @@ def processStackFromMDSW(stack):
                     break
 
             #stackFrameNum = int(a[1])
-            #if stackFrameNum > 10:
-            #    break
             module = a[2]
             funName = a[3]
+
             b = a[4].split(":")
-
-            print
-            htmlMain += "\n<h3>" + html_escape(module) + " ! "
-
             if b[0] == "hg" and b[1].startswith("hg.mozilla.org/"):
                 officialRepoName = b[1].split("/", 1)[1] # e.g. "mozilla-central"
                 line = a[5]
                 filename = b[2]
                 changeset = b[3]
-                if funName != "":
-                    mxrSearchLink = "https://mxr.mozilla.org/" + officialRepoName + "/search?string=" + urllib.quote_plus(funName.split("(")[0])
-                    mxrSearchLink = html_link(mxrSearchLink, html_escape(funName), "mxrSearch")
-                    htmlMain += mxrSearchLink
-                else:
-                    htmlMain += "(unknown function)"
-                if filename != "":
-                    mxrLineLink = "https://mxr.mozilla.org/" + officialRepoName + "/source/" + filename + "#" + line
-                    mxrLineLink = "(" + html_link(mxrLineLink, html_escape(filename + ":" + line), "mxrLine") + ")"
-                    htmlMain += " " + mxrLineLink + "</h3>\n\n"
-                    print module + " ! " + funName + " (" + filename + ":" + line + " @ " + changeset + ")"
-                    print
-                    if not "dist/include" in filename:
-                        showContext(filename, int(line), officialRepoName, changeset)
-                else:
-                    print module + " ! " + funName + " (unknown.file:" + line + ")"
-                    htmlMain += " (unknown.file:" + line + ")</h3>\n\n"
             else:
-                print module + " ! " + funName + " (unknown repo)"
-                htmlMain += html_escape(funName) + " (unknown repo)</h3>\n\n"
+                officialRepoName = None
+                line = None
+                filename = None
+                changeset = None
+
+            showStackEntry(module, funName, line, filename, changeset, officialRepoName)
+
+
+def showStackEntry(module, funName, line, filename, changeset, officialRepoName):
+    global htmlMain
+    modulePrefix = module + " ! " if module else ""
+    print
+    htmlMain += "\n<h3>" + html_escape(modulePrefix)
+
+    if officialRepoName:
+        if funName != "":
+            mxrSearchLink = "https://mxr.mozilla.org/" + officialRepoName + "/search?string=" + urllib.quote_plus(funName.split("(")[0])
+            mxrSearchLink = html_link(mxrSearchLink, html_escape(funName), "mxrSearch")
+            htmlMain += mxrSearchLink
+        else:
+            htmlMain += "(unknown function)"
+
+        if filename != "":
+            mxrLineLink = "https://mxr.mozilla.org/" + officialRepoName + "/source/" + filename + "#" + line
+            mxrLineLink = "(" + html_link(mxrLineLink, html_escape(filename + ":" + line), "mxrLine") + ")"
+            htmlMain += " " + mxrLineLink + "</h3>\n\n"
+            print modulePrefix + funName + " (" + filename + ":" + line + " @ " + changeset + ")"
+            print
+            if not "dist/include" in filename:
+                showContext(filename, int(line), officialRepoName, changeset)
+        else:
+            print modulePrefix + funName + " (unknown.file:" + line + ")"
+            htmlMain += " (unknown.file:" + line + ")</h3>\n\n"
+    else:
+        print modulePrefix + funName + " (unknown repo)"
+        htmlMain += html_escape(funName) + " (unknown repo)</h3>\n\n"
+
 
 def showContext(filename, line, officialRepoName, changeset):
     global htmlMain, rawBlameCache
