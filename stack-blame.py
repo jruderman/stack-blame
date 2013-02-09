@@ -98,13 +98,13 @@ def processStackFromMDSW(stack):
                 filename = b[2]
                 changeset = b[3]
                 if funName != "":
-                    mxrSearchLink = "http://mxr.mozilla.org/" + officialRepoName + "/search?string=" + urllib.quote_plus(funName.split("(")[0])
+                    mxrSearchLink = "https://mxr.mozilla.org/" + officialRepoName + "/search?string=" + urllib.quote_plus(funName.split("(")[0])
                     mxrSearchLink = html_link(mxrSearchLink, html_escape(funName), "mxrSearch")
                     htmlMain += mxrSearchLink
                 else:
                     htmlMain += "(unknown function)"
                 if filename != "":
-                    mxrLineLink = "http://mxr.mozilla.org/" + officialRepoName + "/source/" + filename + "#" + str(line)
+                    mxrLineLink = "https://mxr.mozilla.org/" + officialRepoName + "/source/" + filename + "#" + str(line)
                     mxrLineLink = "(" + html_link(mxrLineLink, html_escape(filename + ":" + str(line)), "mxrLine") + ")"
                     htmlMain += " " + mxrLineLink + "</h3>\n\n"
                     print module + " ! " + funName + " (" + filename + ":" + str(line) + " @ " + changeset + ")"
@@ -143,9 +143,9 @@ def showContext(filename, line, officialRepoName, changeset):
         htmlColor = 'hsl(120, 100%, ' + str(int(100 - ageFrac*50)) + '%)'
         htmlBegin = '<div class="line' + (' target' if lineNum == line else '') + '" style="background: ' + htmlColor + '; color: black;">'
         htmlEnd = '</div>\n'
-        htmlDiffURL = "http://hg.mozilla.org/" + officialRepoName + "/diff/" + commitChangeset + "/" + filename
+        htmlDiffURL = "https://hg.mozilla.org/" + officialRepoName + "/diff/" + commitChangeset + "/" + filename
         htmlDiffLink = html_link(htmlDiffURL, html_escape(commitUserAndRev), "fileDiff", title="Committed " + commitDate)
-        htmlAnnotateURL = "http://hg.mozilla.org/" + officialRepoName + "/annotate/" + changeset + "/" + filename + "#l" + str(lineNum)
+        htmlAnnotateURL = "https://hg.mozilla.org/" + officialRepoName + "/annotate/" + changeset + "/" + filename + "#l" + str(lineNum)
         htmlAnnotateLink = html_link(htmlAnnotateURL, rjust(str(lineNum), 5), "lineBlame")
         htmlMain += htmlBegin + htmlDiffLink + " " + htmlAnnotateLink + " " + html_escape(codeLine) + htmlEnd
 
