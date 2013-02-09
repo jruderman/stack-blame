@@ -94,7 +94,7 @@ def processStackFromMDSW(stack):
 
             if b[0] == "hg" and b[1].startswith("hg.mozilla.org/"):
                 officialRepoName = b[1].split("/", 1)[1] # e.g. "mozilla-central"
-                line = int(a[5])
+                line = a[5]
                 filename = b[2]
                 changeset = b[3]
                 if funName != "":
@@ -104,16 +104,16 @@ def processStackFromMDSW(stack):
                 else:
                     htmlMain += "(unknown function)"
                 if filename != "":
-                    mxrLineLink = "https://mxr.mozilla.org/" + officialRepoName + "/source/" + filename + "#" + str(line)
-                    mxrLineLink = "(" + html_link(mxrLineLink, html_escape(filename + ":" + str(line)), "mxrLine") + ")"
+                    mxrLineLink = "https://mxr.mozilla.org/" + officialRepoName + "/source/" + filename + "#" + line
+                    mxrLineLink = "(" + html_link(mxrLineLink, html_escape(filename + ":" + line), "mxrLine") + ")"
                     htmlMain += " " + mxrLineLink + "</h3>\n\n"
-                    print module + " ! " + funName + " (" + filename + ":" + str(line) + " @ " + changeset + ")"
+                    print module + " ! " + funName + " (" + filename + ":" + line + " @ " + changeset + ")"
                     print
                     if not "dist/include" in filename:
-                        showContext(filename, line, officialRepoName, changeset)
+                        showContext(filename, int(line), officialRepoName, changeset)
                 else:
-                    print module + " ! " + funName + " (unknown.file:" + str(line) + ")"
-                    htmlMain += " (unknown.file:" + str(line) + ")</h3>\n\n"
+                    print module + " ! " + funName + " (unknown.file:" + line + ")"
+                    htmlMain += " (unknown.file:" + line + ")</h3>\n\n"
             else:
                 print module + " ! " + funName + " (unknown repo)"
                 htmlMain += html_escape(funName) + " (unknown repo)</h3>\n\n"
