@@ -21,6 +21,7 @@ parser.add_argument("input", help="Crash report ID (or file containing the outpu
 args = parser.parse_args()
 
 beginning_of_time = datetime.date(2007, 03, 22) # Mozilla's CVS->Hg migration
+revDigits = 6 # mozilla-central has over 100000 changesets
 today = datetime.date.today()
 
 htmlPrologue = ""
@@ -137,7 +138,7 @@ def showContext(filename, line, officialRepoName, changeset):
         commitDate = commitDateAndLine[0:10]
         codeLine = commitDateAndLine[12:]
         ageFrac = freshness(commitDate)
-        commitUserAndRev = rjust(commitUser, 12) + "@" + ljust(commitRev, 5)
+        commitUserAndRev = rjust(commitUser, 12) + "@" + ljust(commitRev, revDigits)
 
         htmlColor = 'hsl(120, 100%, ' + str(int(100 - ageFrac*50)) + '%)'
         htmlBegin = '<div class="line' + (' target' if lineNum == line else '') + '" style="background: ' + htmlColor + '; color: black;">'
