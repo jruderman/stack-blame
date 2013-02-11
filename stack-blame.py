@@ -102,7 +102,7 @@ def processStack(stack):
 
             showStackEntry(module, funName, line, filename, changeset, officialRepoName, None)
 
-        elif stackLine.startswith("#"):
+        elif stackLine[0] == "#" and stackLine[1].isdigit():
             # gdb "bt"
             # Example:
             # #1  0x0000000104ae1111 in str_localeCompare (cx=0x10bde7fb0, argc=0, vp=0x111a3a0a0) at /Users/jruderman/trees/mozilla-central/js/src/jsstr.cpp:779
